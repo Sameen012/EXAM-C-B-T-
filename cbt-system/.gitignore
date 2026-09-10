@@ -5,4 +5,5 @@ npm-debug.log*
 *.db
 *.db-journal
 *.db-wal
+*.db-shm
 *.sqlite
