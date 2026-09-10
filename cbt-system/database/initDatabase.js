@@ -32,31 +32,50 @@ async function cleanupSingleQuestionCourses() {
 }
 
 async function initDatabase() {
-  const schemaPath = path.join(__dirname, 'schema.sql');
-  const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-
   try {
-    // Execute schema statements non-destructively
-    if (typeof db.executeMultiple === 'function') {
-      await db.executeMultiple(schemaSql);
-    } else {
-      const statements = schemaSql
-        .split(';')
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
+    // 1. Check if tables already exist (e.g. uploaded SQLite file in Turso)
+    const [existing] = await pool.query(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='users'"
+    );
 
-      for (const statement of statements) {
-        await db.execute(statement);
+    if (existing && existing.length > 0) {
+      console.log('Database tables verified in Turso (libSQL).');
+      await cleanupSingleQuestionCourses();
+      return true;
+    }
+
+    // 2. If not yet initialized, read and execute schema statements individually
+    const schemaPath = path.join(__dirname, 'schema.sql');
+    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+
+    const cleanSql = schemaSql.replace(/--.*$/gm, '');
+    const statements = cleanSql
+      .split(';')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0 && !s.toLowerCase().startsWith('pragma journal_mode'));
+
+    for (const statement of statements) {
+      try {
+        await pool.query(statement);
+      } catch (stmtErr) {
+        if (!stmtErr.message.includes('already exists')) {
+          console.warn('Schema statement warning:', stmtErr.message);
+        }
       }
     }
 
-    // Clean up any test/dummy subjects that have only 1 question
     await cleanupSingleQuestionCourses();
-
     console.log('Database and tables initialized successfully with Turso (libSQL).');
     return true;
   } catch (error) {
-    console.error('Database initialization failed:', error.message);
+    console.error('Database initialization notice:', error.message);
+    try {
+      const [check] = await pool.query('SELECT COUNT(*) as count FROM users');
+      if (check && check.length > 0) {
+        console.log('Existing database verified functional.');
+        return true;
+      }
+    } catch (_) {}
     throw error;
   }
 }

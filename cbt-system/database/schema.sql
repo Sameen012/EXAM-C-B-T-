@@ -1,6 +1,5 @@
 -- SQLite / Turso libSQL Schema for National Examination CBT Practice System
 PRAGMA foreign_keys = ON;
-PRAGMA journal_mode = WAL;
 
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
