@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CBT Examination</title>
+    <link rel="icon" type="image/png" href="./assets/SACHT.png" />
+    <link rel="apple-touch-icon" href="./assets/SACHT.png" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/cbt.css" />
+  </head>
+  <body>
+    <div class="exam-shell">
+      <header class="exam-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <img src="./assets/SACHT.png" alt="SACHT Logo" class="sacht-logo-rounded logo-sm" />
+          <div>
+            <strong id="student-name-label">Student</strong>
+            <span id="course-name-label">Course</span>
+          </div>
+        </div>
+        <div class="timer-box">
+          <span>Time Left</span>
+          <strong id="countdown-timer">00:00</strong>
+        </div>
+      </header>
+
+      <main class="exam-layout">
+        <aside class="question-nav">
+          <h3>Questions</h3>
+          <div id="question-number-panel" class="question-panel"></div>
+        </aside>
+
+        <section class="question-area">
+          <div id="exam-notice" class="exam-notice" style="display: none;"></div>
+          <div class="question-meta">
+            <span id="question-counter">Preparing examination...</span>
+          </div>
+
+          <h2 id="question-text">Loading examination questions...</h2>
+
+          <div class="answers" id="answer-options"></div>
+
+          <div class="exam-actions">
+            <button type="button" class="secondary-btn" id="prev-question">Previous</button>
+            <button type="button" class="primary-btn" id="next-question">Next</button>
+            <button type="button" class="danger-btn" id="submit-exam">Submit Exam</button>
+          </div>
+        </section>
+      </main>
+
+      <!-- Submit Confirmation Modal -->
+      <div id="submit-confirm-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+          <h3>Confirm Examination Submission</h3>
+          <p>Are you sure you want to submit your examination now? Please review your progress:</p>
+          <div class="modal-stats">
+            <div class="modal-stat-box">
+              <span>Total</span>
+              <strong id="modal-total-questions">0</strong>
+            </div>
+            <div class="modal-stat-box">
+              <span>Answered</span>
+              <strong id="modal-answered-questions" style="color: #16a34a;">0</strong>
+            </div>
+            <div class="modal-stat-box">
+              <span>Unanswered</span>
+              <strong id="modal-unanswered-questions" style="color: #dc2626;">0</strong>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="secondary-btn" id="modal-cancel-btn">Continue Exam</button>
+            <button type="button" class="danger-btn" id="modal-confirm-btn">Confirm Submit</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="./js/exam.js"></script>
+  </body>
+</html>

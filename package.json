@@ -1,0 +1,10 @@
+{
+  "name": "cbt-exam-workspace",
+  "private": true,
+  "scripts": {
+    "start": "npm --prefix cbt-system start",
+    "dev": "npm --prefix cbt-system run dev",
+    "db:init": "npm --prefix cbt-system run db:init",
+    "test:smoke": "npm --prefix cbt-system run test:smoke"
+  }
+}
