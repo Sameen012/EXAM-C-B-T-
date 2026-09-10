@@ -1,5 +1,6 @@
 const { app, bootstrapDatabase } = require('../backend/server');
 const { pool } = require('../backend/config/database');
+const { buildWelcomeEmailContent } = require('../backend/utils/emailService');
 const XLSX = require('xlsx');
 
 const checks = [
@@ -96,6 +97,20 @@ const checks = [
         console.log(`${usersPassed ? 'PASS' : 'FAIL'} super admin get users endpoint: ${usersResponse.status}`);
         if (!usersPassed) failed = true;
       }
+
+      // Test Dynamic Welcome Email Template Generation
+      const sameenEmail = buildWelcomeEmailContent('Sameen');
+      const aishaEmail = buildWelcomeEmailContent('Aisha');
+      const emailTemplatePassed =
+        sameenEmail.subject === 'Welcome to SACHT CBT 🎉' &&
+        sameenEmail.text.includes('Hello Sameen,') &&
+        sameenEmail.text.includes('Welcome to SACHT CBT!') &&
+        sameenEmail.text.includes('Practice CBT questions') &&
+        aishaEmail.text.includes('Hello Aisha,') &&
+        sameenEmail.html.includes('Hello <strong>Sameen</strong>,') &&
+        aishaEmail.html.includes('Hello <strong>Aisha</strong>,');
+      console.log(`${emailTemplatePassed ? 'PASS' : 'FAIL'} dynamic welcome email template generation`);
+      if (!emailTemplatePassed) failed = true;
 
       // Test Student Registration and Authentication Flow
       const testStudentEmail = `smoke_student_${Date.now()}@example.com`;

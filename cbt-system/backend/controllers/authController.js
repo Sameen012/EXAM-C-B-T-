@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { pool } = require('../config/database');
 const { sendSuccess, sendError } = require('../utils/response');
+const { sendWelcomeEmail } = require('../utils/emailService');
 
 const loginAttempts = new Map();
 const loginWindowMs = 15 * 60 * 1000;
@@ -113,6 +114,18 @@ exports.register = async (req, res) => {
     const user = rows[0];
     const token = signUserToken(user);
 
+    // Send welcome email resiliently (do not break registration if email fails)
+    let emailSent = false;
+    try {
+      const emailResult = await sendWelcomeEmail({
+        to: user.email,
+        fullName: user.full_name,
+      });
+      emailSent = Boolean(emailResult && emailResult.success);
+    } catch (emailError) {
+      console.error(`[Registration] Email notification error for ${user.email}:`, emailError.message);
+    }
+
     return sendSuccess(res, 'User registered successfully', {
       token,
       user: {
@@ -121,6 +134,7 @@ exports.register = async (req, res) => {
         email: user.email,
         role: normalizeRole(user.role),
       },
+      emailSent,
     }, 201);
   } catch (error) {
     console.error('User registration failed:', error.message);
