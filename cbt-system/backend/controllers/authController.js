@@ -144,8 +144,8 @@ exports.login = async (req, res) => {
 
   try {
     const [rows] = await pool.query(
-      'SELECT * FROM users WHERE is_active = 1 AND (email = ? OR full_name = ?)',
-      [loginIdentifier.toLowerCase(), loginIdentifier]
+      'SELECT * FROM users WHERE is_active = 1 AND lower(email) = ?',
+      [loginIdentifier.toLowerCase()]
     );
 
     if (rows.length === 0) {

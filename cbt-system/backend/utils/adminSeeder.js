@@ -2,20 +2,43 @@ const bcrypt = require('bcrypt');
 const { pool } = require('../config/database');
 
 async function ensureAdminExists() {
-  const username = (process.env.ADMIN_USERNAME || 'admin').trim();
-  const email = (process.env.ADMIN_EMAIL || `${username}@local.test`).trim();
-  const password = process.env.ADMIN_PASSWORD || 'admin123';
-  const fullName = process.env.ADMIN_FULL_NAME || username;
+  const rawEmail = (process.env.ADMIN_EMAIL || '').trim();
+  const rawUsername = (process.env.ADMIN_USERNAME || '').trim();
+
+  let email;
+  if (rawEmail) {
+    email = rawEmail.toLowerCase();
+  } else if (rawUsername && rawUsername.includes('@')) {
+    email = rawUsername.toLowerCase();
+  } else {
+    email = 'admin@sacht.edu.ng';
+  }
+
+  const password = process.env.ADMIN_PASSWORD || 'SameenAdmin2026';
+  const fullName = (process.env.ADMIN_FULL_NAME || (rawUsername && !rawUsername.includes('@') ? rawUsername : 'System Administrator')).trim();
 
   try {
-    const [rows] = await pool.query(
-      'SELECT * FROM users WHERE email = ? OR full_name = ? OR full_name = ? OR email = ?',
-      [email, fullName, 'System Administrator', 'admin@local.test']
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // 1. Check if a user with this email already exists
+    const [byEmail] = await pool.query('SELECT * FROM users WHERE lower(email) = ?', [email]);
+    if (byEmail.length > 0) {
+      const existing = byEmail[0];
+      await pool.query(
+        'UPDATE users SET role = ?, password_hash = ?, is_active = 1 WHERE id = ?',
+        ['super_admin', passwordHash, existing.id]
+      );
+      return { id: existing.id };
+    }
+
+    // 2. Check if an existing super admin or placeholder admin exists to update
+    const [byRole] = await pool.query(
+      'SELECT * FROM users WHERE role = ? OR email IN (?, ?) ORDER BY id ASC',
+      ['super_admin', 'Sameen@local.test', 'admin@local.test']
     );
 
-    if (rows.length > 0) {
-      const existing = rows[0];
-      const passwordHash = await bcrypt.hash(password, 10);
+    if (byRole.length > 0) {
+      const existing = byRole[0];
       await pool.query(
         'UPDATE users SET full_name = ?, email = ?, password_hash = ?, role = ?, is_active = 1 WHERE id = ?',
         [fullName, email, passwordHash, 'super_admin', existing.id]
@@ -23,7 +46,7 @@ async function ensureAdminExists() {
       return { id: existing.id };
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    // 3. Otherwise, create a new super admin
     const [result] = await pool.query(
       'INSERT INTO users (full_name, email, password_hash, role, is_active) VALUES (?, ?, ?, ?, 1)',
       [fullName, email, passwordHash, 'super_admin']

@@ -46,18 +46,39 @@ const checks = [
       console.log(`${cachePolicy === 'no-store' ? 'PASS' : 'FAIL'} API cache policy`);
       if (cachePolicy !== 'no-store') failed = true;
 
+      // Verify rejection of plain display name "Sameen" (enforce email-only login)
+      const rejectNameResponse = await fetch(`http://localhost:${port}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          identifier: 'Sameen',
+          password: process.env.ADMIN_PASSWORD || 'SameenAdmin2026',
+        }),
+      });
+      const rejectNamePassed = rejectNameResponse.status === 401;
+      console.log(`${rejectNamePassed ? 'PASS' : 'FAIL'} reject plain-name login 'Sameen': ${rejectNameResponse.status}`);
+      if (!rejectNamePassed) failed = true;
+
+      // Admin login using configured email
+      const adminEmail = (
+        process.env.ADMIN_EMAIL ||
+        (process.env.ADMIN_USERNAME && process.env.ADMIN_USERNAME.includes('@')
+          ? process.env.ADMIN_USERNAME
+          : 'admin@sacht.edu.ng')
+      ).trim().toLowerCase();
+
       const loginResponse = await fetch(`http://localhost:${port}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          identifier: process.env.ADMIN_USERNAME || 'admin',
-          password: process.env.ADMIN_PASSWORD || 'admin123',
+          identifier: adminEmail,
+          password: process.env.ADMIN_PASSWORD || 'SameenAdmin2026',
         }),
       });
       const loginResult = await loginResponse.json();
       const adminToken = loginResult.data?.token;
       const loginPassed = loginResponse.status === 200 && Boolean(adminToken);
-      console.log(`${loginPassed ? 'PASS' : 'FAIL'} admin login: ${loginResponse.status}`);
+      console.log(`${loginPassed ? 'PASS' : 'FAIL'} admin login with email (${adminEmail}): ${loginResponse.status}`);
       if (!loginPassed) failed = true;
 
       if (adminToken) {

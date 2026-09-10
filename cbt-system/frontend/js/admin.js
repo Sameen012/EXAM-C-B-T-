@@ -428,7 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const password = document.getElementById('admin-password').value.trim();
 
       if (!identifier || !password) {
-        alert('Please enter your admin username/email and password.');
+        alert('Please enter your admin email and password.');
         return;
       }
 
