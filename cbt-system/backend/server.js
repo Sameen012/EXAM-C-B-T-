@@ -1,6 +1,12 @@
-const express = require('express');
-const dotenv = require('dotenv');
 const path = require('path');
+const dotenv = require('dotenv');
+
+// Load environment variables from cwd, cbt-system folder, and workspace root
+dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
+dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
+
+const express = require('express');
 const crypto = require('crypto');
 
 const { initDatabase } = require('../database/initDatabase');
@@ -13,8 +19,6 @@ const questionRoutes = require('./routes/questionRoutes');
 const examRoutes = require('./routes/examRoutes');
 const resultRoutes = require('./routes/resultRoutes');
 const studentRoutes = require('./routes/studentRoutes');
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;

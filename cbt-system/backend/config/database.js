@@ -1,7 +1,10 @@
+const path = require('path');
 const { createClient } = require('@libsql/client');
 const dotenv = require('dotenv');
 
 dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
+dotenv.config({ path: path.resolve(__dirname, '..', '..', '..', '.env') });
 
 function getDatabaseConfig() {
   const url = process.env.TURSO_DATABASE_URL;

@@ -16,5 +16,7 @@ router.post('/users', requireAuth, requireRole('super_admin'), authController.cr
 router.put('/users/:id', requireAuth, requireRole('super_admin'), authController.updateUser);
 router.delete('/users/:id', requireAuth, requireRole('super_admin'), authController.deleteUser);
 router.post('/change-password', requireAuth, requireAdmin, authController.changePassword);
+router.get('/email-status', requireAuth, requireRole('super_admin'), authController.getEmailStatus);
+router.post('/test-email', requireAuth, requireRole('super_admin'), authController.testEmail);
 
 module.exports = router;

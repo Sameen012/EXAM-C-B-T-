@@ -8,7 +8,8 @@
     "start": "node cbt-system/backend/server.js",
     "dev": "npm --prefix cbt-system run dev",
     "db:init": "npm --prefix cbt-system run db:init",
-    "test:smoke": "npm --prefix cbt-system run test:smoke"
+    "test:smoke": "npm --prefix cbt-system run test:smoke",
+    "test:email": "npm --prefix cbt-system run test:email"
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",

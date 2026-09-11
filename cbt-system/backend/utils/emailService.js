@@ -1,4 +1,12 @@
+const path = require('path');
+const dotenv = require('dotenv');
 const nodemailer = require('nodemailer');
+
+// Ensure environment variables are loaded regardless of how this file was imported
+dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
+dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
+dotenv.config({ path: path.resolve(__dirname, '..', '..', '..', '.env') });
 
 /**
  * Escapes HTML characters in user input to prevent HTML injection in emails.
@@ -14,35 +22,80 @@ function escapeHtml(str) {
 }
 
 /**
+ * Sanitizes SMTP credentials:
+ * - Trims whitespace from user and password
+ * - Strips internal spaces from 16-character Google App Passwords (e.g. "xxxx yyyy zzzz wwww" -> "xxxxyyyyzzzzwwww")
+ */
+function sanitizeCredentials(user, pass) {
+  const cleanUser = String(user || '').trim();
+  let cleanPass = String(pass || '').trim();
+
+  // Google app passwords are 16 letters, displayed in 4 blocks of 4
+  const strippedPass = cleanPass.replace(/\s+/g, '');
+  if (strippedPass.length === 16) {
+    cleanPass = strippedPass;
+  }
+
+  return { cleanUser, cleanPass };
+}
+
+/**
+ * Resolves the From address.
+ * If user has a personal Gmail or custom SMTP, sending with "no-reply@sacht.edu.ng" will fail DMARC/SPF
+ * or be rejected by Gmail SMTP (550 sender address not permitted).
+ */
+function resolveFromAddress(user) {
+  const configuredFrom = (process.env.EMAIL_FROM || '').trim();
+  
+  if (configuredFrom && !configuredFrom.includes('no-reply@sacht.edu.ng')) {
+    return configuredFrom;
+  }
+
+  if (user) {
+    return `"SACHT CBT Team" <${user}>`;
+  }
+
+  return configuredFrom || '"SACHT CBT Team" <no-reply@sacht.edu.ng>';
+}
+
+/**
  * Creates or retrieves the Nodemailer transporter based on environment variables.
  */
 function createTransporter() {
-  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const host = (process.env.SMTP_HOST || 'smtp.gmail.com').trim();
   const port = parseInt(process.env.SMTP_PORT || '587', 10);
   const secure = process.env.SMTP_SECURE === 'true' || port === 465;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const rawUser = process.env.SMTP_USER;
+  const rawPass = process.env.SMTP_PASS;
 
-  if (!user || !pass) {
+  const { cleanUser, cleanPass } = sanitizeCredentials(rawUser, rawPass);
+
+  if (!cleanUser || !cleanPass) {
     return null;
   }
 
+  const isGmail = host.includes('gmail') || cleanUser.endsWith('@gmail.com') || process.env.SMTP_SERVICE === 'gmail';
+
   const transportOptions = {
-    host,
-    port,
-    secure,
     auth: {
-      user,
-      pass,
+      user: cleanUser,
+      pass: cleanPass,
     },
-    // Enforce reasonable connection timeouts so requests don't hang
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
+    connectionTimeout: 12000,
+    greetingTimeout: 12000,
+    socketTimeout: 20000,
   };
 
-  if (process.env.SMTP_SERVICE) {
-    transportOptions.service = process.env.SMTP_SERVICE;
+  if (isGmail) {
+    // Nodemailer has dedicated preset for Gmail handling SSL/ports automatically
+    transportOptions.service = 'gmail';
+  } else {
+    transportOptions.host = host;
+    transportOptions.port = port;
+    transportOptions.secure = secure;
+    if (process.env.SMTP_SERVICE) {
+      transportOptions.service = process.env.SMTP_SERVICE;
+    }
   }
 
   return nodemailer.createTransport(transportOptions);
@@ -154,7 +207,8 @@ async function sendWelcomeEmail({ to, fullName }) {
     return { success: false, skipped: true, message: 'SMTP credentials not configured' };
   }
 
-  const fromAddress = process.env.EMAIL_FROM || `"SACHT CBT Team" <${process.env.SMTP_USER}>`;
+  const { cleanUser } = sanitizeCredentials(process.env.SMTP_USER, process.env.SMTP_PASS);
+  const fromAddress = resolveFromAddress(cleanUser);
   const { subject, text, html } = buildWelcomeEmailContent(recipientName);
 
   try {
@@ -169,13 +223,105 @@ async function sendWelcomeEmail({ to, fullName }) {
     console.log(`[EmailService] Welcome email sent successfully to ${recipientEmail} (messageId: ${info.messageId})`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error(`[EmailService] Failed to send welcome email to ${recipientEmail}: ${error.message}`);
-    return { success: false, error: error.message };
+    let errorDetail = error.message;
+    if (error.message && error.message.includes('535') && cleanUser.endsWith('@gmail.com')) {
+      errorDetail += ' (Hint: Gmail requires a 16-character Google App Password, not your standard Gmail password)';
+    }
+    console.error(`[EmailService] Failed to send welcome email to ${recipientEmail}: ${errorDetail}`);
+    return { success: false, error: errorDetail };
+  }
+}
+
+/**
+ * Verifies the SMTP transporter connection without sending an email.
+ * @returns {Promise<{ configured: boolean, valid: boolean, error?: string, user?: string }>}
+ */
+async function verifySmtpConnection() {
+  const { cleanUser, cleanPass } = sanitizeCredentials(process.env.SMTP_USER, process.env.SMTP_PASS);
+
+  if (!cleanUser || !cleanPass) {
+    return {
+      configured: false,
+      valid: false,
+      error: 'SMTP_USER or SMTP_PASS is missing in environment configuration',
+    };
+  }
+
+  const transporter = createTransporter();
+  if (!transporter) {
+    return {
+      configured: false,
+      valid: false,
+      error: 'Could not initialize SMTP transport with current settings',
+    };
+  }
+
+  try {
+    await transporter.verify();
+    return { configured: true, valid: true, user: cleanUser };
+  } catch (error) {
+    let errorDetail = error.message;
+    if (error.message && error.message.includes('535') && cleanUser.endsWith('@gmail.com')) {
+      errorDetail += ' (Google App Password required for Gmail accounts)';
+    }
+    return {
+      configured: true,
+      valid: false,
+      error: errorDetail,
+      user: cleanUser,
+    };
+  }
+}
+
+/**
+ * Sends a diagnostic test email to confirm delivery.
+ * @param {string} recipient
+ * @returns {Promise<{ success: boolean, messageId?: string, error?: string }>}
+ */
+async function sendTestEmail(recipient) {
+  if (!recipient || !recipient.includes('@')) {
+    return { success: false, error: 'Valid recipient email required' };
+  }
+
+  const transporter = createTransporter();
+  if (!transporter) {
+    return { success: false, error: 'SMTP credentials not configured in .env' };
+  }
+
+  const { cleanUser } = sanitizeCredentials(process.env.SMTP_USER, process.env.SMTP_PASS);
+  const fromAddress = resolveFromAddress(cleanUser);
+
+  try {
+    const info = await transporter.sendMail({
+      from: fromAddress,
+      to: recipient.trim().toLowerCase(),
+      subject: 'SACHT CBT - SMTP Test Email',
+      text: 'This is a confirmation test email from the SACHT National CBT Examination Portal. Your email notification setup is functioning correctly.',
+      html: `<div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+        <h2 style="color: #0284c7;">SACHT CBT Email Service Test</h2>
+        <p>This is an automated confirmation test email from the <strong>SACHT National CBT Examination Portal</strong>.</p>
+        <p style="color: #16a34a; font-weight: bold;">&#10004; Your email notification configuration is active and working properly!</p>
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+        <p style="font-size: 12px; color: #666;">Sender: ${escapeHtml(fromAddress)}</p>
+      </div>`,
+    });
+
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    let errorDetail = error.message;
+    if (error.message && error.message.includes('535') && cleanUser.endsWith('@gmail.com')) {
+      errorDetail += ' (Hint: Gmail requires a 16-character Google App Password, not your standard Gmail password)';
+    }
+    return { success: false, error: errorDetail };
   }
 }
 
 module.exports = {
   sendWelcomeEmail,
+  sendTestEmail,
+  verifySmtpConnection,
   buildWelcomeEmailContent,
   escapeHtml,
+  sanitizeCredentials,
+  resolveFromAddress,
 };

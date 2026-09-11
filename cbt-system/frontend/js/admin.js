@@ -1050,9 +1050,8 @@ document.addEventListener('DOMContentLoaded', () => {
             headers: getAuthHeaders(),
             body: JSON.stringify({ fullName, email, password, role }),
           });
-          const resJson = await res.json();
-          if (!res.ok || !resJson.success) throw new Error(resJson.message || 'Unable to create user');
-          alert('User account created successfully.');
+          const emailNotice = resJson.data?.emailSent ? ' Welcome email sent to user.' : '';
+          alert(`User account created successfully.${emailNotice}`);
           createUserForm.reset();
           loadUsers();
         } catch (err) {

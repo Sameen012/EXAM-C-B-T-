@@ -96,6 +96,13 @@ const checks = [
         const usersPassed = usersResponse.status === 200;
         console.log(`${usersPassed ? 'PASS' : 'FAIL'} super admin get users endpoint: ${usersResponse.status}`);
         if (!usersPassed) failed = true;
+
+        const emailStatusResp = await fetch(`http://localhost:${port}/api/auth/email-status`, {
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+        const emailStatusPassed = emailStatusResp.status === 200;
+        console.log(`${emailStatusPassed ? 'PASS' : 'FAIL'} super admin email status endpoint: ${emailStatusResp.status}`);
+        if (!emailStatusPassed) failed = true;
       }
 
       // Test Dynamic Welcome Email Template Generation

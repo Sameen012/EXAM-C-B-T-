@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { pool } = require('../config/database');
 const { sendSuccess, sendError } = require('../utils/response');
-const { sendWelcomeEmail } = require('../utils/emailService');
+const { sendWelcomeEmail, sendTestEmail, verifySmtpConnection } = require('../utils/emailService');
 
 const loginAttempts = new Map();
 const loginWindowMs = 15 * 60 * 1000;
@@ -301,8 +301,21 @@ exports.createUser = async (req, res) => {
     );
 
     const [rows] = await pool.query('SELECT id, full_name, email, role, is_active, created_at FROM users WHERE id = ?', [result.insertId]);
+    const newUser = rows[0];
 
-    return sendSuccess(res, 'User created successfully', rows[0], 201);
+    // Send welcome email resiliently to newly created user
+    let emailSent = false;
+    try {
+      const emailResult = await sendWelcomeEmail({
+        to: newUser.email,
+        fullName: newUser.full_name,
+      });
+      emailSent = Boolean(emailResult && emailResult.success);
+    } catch (emailErr) {
+      console.error(`[AdminCreateUser] Email error for ${newUser.email}:`, emailErr.message);
+    }
+
+    return sendSuccess(res, 'User created successfully', { ...newUser, emailSent }, 201);
   } catch (error) {
     console.error('Create user failed:', error.message);
     return sendError(res, 'Unable to create user', 500);
@@ -385,3 +398,30 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
+exports.getEmailStatus = async (req, res) => {
+  try {
+    const status = await verifySmtpConnection();
+    return sendSuccess(res, 'SMTP status retrieved', status);
+  } catch (error) {
+    return sendError(res, error.message || 'Unable to check SMTP status', 500);
+  }
+};
+
+exports.testEmail = async (req, res) => {
+  const { recipient } = req.body || {};
+  const targetEmail = String(recipient || req.user?.email || '').trim();
+
+  if (!targetEmail || !targetEmail.includes('@')) {
+    return sendError(res, 'Valid recipient email address is required', 400);
+  }
+
+  try {
+    const result = await sendTestEmail(targetEmail);
+    if (!result.success) {
+      return sendError(res, result.error || 'Failed to send test email', 400);
+    }
+    return sendSuccess(res, `Test email sent successfully to ${targetEmail}`, result);
+  } catch (error) {
+    return sendError(res, error.message || 'Error executing test email', 500);
+  }
+};

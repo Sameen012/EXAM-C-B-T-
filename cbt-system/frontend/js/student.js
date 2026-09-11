@@ -79,7 +79,10 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('studentName', user?.fullName || payload.fullName);
         localStorage.setItem('userRole', user?.role || 'question_creator');
 
-        alert('Account created successfully! You can now author questions, manage your courses, and take practice exams.');
+        const emailNotice = result.data?.emailSent
+          ? '\nA welcome confirmation email has been sent to your inbox.'
+          : '';
+        alert(`Account created successfully!${emailNotice} You can now author questions, manage your courses, and take practice exams.`);
         window.location.href = './courses.html';
       } catch (error) {
         alert(error.message || 'Unable to create account.');
