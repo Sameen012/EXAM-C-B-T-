@@ -312,6 +312,15 @@ async function sendWelcomeEmail({ to, fullName }) {
  * @returns {Promise<{ configured: boolean, valid: boolean, error?: string, user?: string }>}
  */
 async function verifySmtpConnection() {
+  if (process.env.RESEND_API_KEY) {
+    return {
+      configured: true,
+      valid: true,
+      provider: 'resend',
+      user: 'Resend HTTPS API (Port 443 active)',
+    };
+  }
+
   const { cleanUser, cleanPass } = sanitizeCredentials(process.env.SMTP_USER, process.env.SMTP_PASS);
 
   if (!cleanUser || !cleanPass) {
@@ -333,10 +342,12 @@ async function verifySmtpConnection() {
 
   try {
     await transporter.verify();
-    return { configured: true, valid: true, user: cleanUser };
+    return { configured: true, valid: true, provider: 'smtp', user: cleanUser };
   } catch (error) {
     let errorDetail = error.message;
-    if (error.message && error.message.includes('535') && cleanUser.endsWith('@gmail.com')) {
+    if (error.message && error.message.includes('timeout')) {
+      errorDetail += ' (Render free tier blocks SMTP ports 465/587. RESEND_API_KEY is recommended)';
+    } else if (error.message && error.message.includes('535') && cleanUser.endsWith('@gmail.com')) {
       errorDetail += ' (Google App Password required for Gmail accounts)';
     }
     return {
@@ -358,9 +369,33 @@ async function sendTestEmail(recipient) {
     return { success: false, error: 'Valid recipient email required' };
   }
 
+  const targetEmail = recipient.trim().toLowerCase();
+
+  // If Resend is configured, use Resend HTTPS API
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const resendRes = await sendViaResend({
+        to: targetEmail,
+        subject: 'SACHT CBT - Email Service Test',
+        text: 'This is a confirmation test email from the SACHT National CBT Examination Portal. Your email notification setup is active.',
+        html: `<div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+          <h2 style="color: #0284c7;">SACHT CBT Email Service Test</h2>
+          <p>This is an automated confirmation test email from the <strong>SACHT National CBT Examination Portal</strong>.</p>
+          <p style="color: #16a34a; font-weight: bold;">&#10004; Your email notification configuration is active and working properly via Resend HTTPS API!</p>
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="font-size: 12px; color: #666;">Provider: Resend API (HTTPS Port 443)</p>
+        </div>`,
+      });
+      if (resendRes && resendRes.success) return resendRes;
+    } catch (resendErr) {
+      console.error('[EmailService] Test email via Resend failed:', resendErr.message);
+      // Fall through to SMTP
+    }
+  }
+
   const transporter = createTransporter();
   if (!transporter) {
-    return { success: false, error: 'SMTP credentials not configured in .env' };
+    return { success: false, error: 'Neither RESEND_API_KEY nor SMTP credentials configured in .env' };
   }
 
   const { cleanUser } = sanitizeCredentials(process.env.SMTP_USER, process.env.SMTP_PASS);
@@ -369,7 +404,7 @@ async function sendTestEmail(recipient) {
   try {
     const info = await transporter.sendMail({
       from: fromAddress,
-      to: recipient.trim().toLowerCase(),
+      to: targetEmail,
       subject: 'SACHT CBT - SMTP Test Email',
       text: 'This is a confirmation test email from the SACHT National CBT Examination Portal. Your email notification setup is functioning correctly.',
       html: `<div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
