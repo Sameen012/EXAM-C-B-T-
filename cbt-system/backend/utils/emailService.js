@@ -22,13 +22,25 @@ function escapeHtml(str) {
 }
 
 /**
+ * Strips accidental wrapping quotation marks (common when copying into hosting panels like Render).
+ */
+function stripQuotes(value) {
+  if (!value) return '';
+  let s = String(value).trim();
+  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    s = s.slice(1, -1).trim();
+  }
+  return s;
+}
+
+/**
  * Sanitizes SMTP credentials:
- * - Trims whitespace from user and password
+ * - Trims whitespace and wrapping quotes from user and password
  * - Strips internal spaces from 16-character Google App Passwords (e.g. "xxxx yyyy zzzz wwww" -> "xxxxyyyyzzzzwwww")
  */
 function sanitizeCredentials(user, pass) {
-  const cleanUser = String(user || '').trim();
-  let cleanPass = String(pass || '').trim();
+  const cleanUser = stripQuotes(user);
+  let cleanPass = stripQuotes(pass);
 
   // Google app passwords are 16 letters, displayed in 4 blocks of 4
   const strippedPass = cleanPass.replace(/\s+/g, '');
@@ -45,7 +57,7 @@ function sanitizeCredentials(user, pass) {
  * or be rejected by Gmail SMTP (550 sender address not permitted).
  */
 function resolveFromAddress(user) {
-  const configuredFrom = (process.env.EMAIL_FROM || '').trim();
+  const configuredFrom = stripQuotes(process.env.EMAIL_FROM);
   
   if (configuredFrom && !configuredFrom.includes('no-reply@sacht.edu.ng')) {
     return configuredFrom;
@@ -62,9 +74,9 @@ function resolveFromAddress(user) {
  * Creates or retrieves the Nodemailer transporter based on environment variables.
  */
 function createTransporter() {
-  const host = (process.env.SMTP_HOST || 'smtp.gmail.com').trim();
-  const port = parseInt(process.env.SMTP_PORT || '587', 10);
-  const secure = process.env.SMTP_SECURE === 'true' || port === 465;
+  const host = stripQuotes(process.env.SMTP_HOST || 'smtp.gmail.com');
+  const port = parseInt(stripQuotes(process.env.SMTP_PORT || '587'), 10);
+  const secure = stripQuotes(process.env.SMTP_SECURE) === 'true' || port === 465;
   const rawUser = process.env.SMTP_USER;
   const rawPass = process.env.SMTP_PASS;
 
@@ -74,16 +86,17 @@ function createTransporter() {
     return null;
   }
 
-  const isGmail = host.includes('gmail') || cleanUser.endsWith('@gmail.com') || process.env.SMTP_SERVICE === 'gmail';
+  const configuredService = stripQuotes(process.env.SMTP_SERVICE || '').toLowerCase();
+  const isGmail = host.includes('gmail') || cleanUser.endsWith('@gmail.com') || configuredService === 'gmail';
 
   const transportOptions = {
     auth: {
       user: cleanUser,
       pass: cleanPass,
     },
-    connectionTimeout: 12000,
-    greetingTimeout: 12000,
-    socketTimeout: 20000,
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 25000,
   };
 
   if (isGmail) {
@@ -93,8 +106,8 @@ function createTransporter() {
     transportOptions.host = host;
     transportOptions.port = port;
     transportOptions.secure = secure;
-    if (process.env.SMTP_SERVICE) {
-      transportOptions.service = process.env.SMTP_SERVICE;
+    if (configuredService) {
+      transportOptions.service = configuredService;
     }
   }
 
