@@ -204,6 +204,52 @@ SACHT CBT Team`;
  * @param {string} options.fullName - Recipient display/registered name
  * @returns {Promise<{ success: boolean, skipped?: boolean, error?: string, messageId?: string }>}
  */
+/**
+ * Sends an email via Resend HTTPS API (Port 443).
+ * Essential for cloud platforms like Render Free Tier that block outbound SMTP ports (25, 465, 587).
+ */
+async function sendViaResend({ to, subject, html, text }) {
+  const apiKey = stripQuotes(process.env.RESEND_API_KEY);
+  if (!apiKey) return null;
+
+  const sender = stripQuotes(process.env.EMAIL_FROM) || 'SACHT CBT <onboarding@resend.dev>';
+
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: sender,
+      to: [to],
+      subject,
+      html,
+      text,
+    }),
+  });
+
+  const resJson = await response.json();
+  if (!response.ok) {
+    throw new Error(resJson.message || `Resend API returned status ${response.status}`);
+  }
+
+  return { success: true, messageId: resJson.id };
+}
+
+/**
+ * Sends a personalized welcome email to a newly registered user.
+ * 
+ * Resilient behavior:
+ * - If credentials are not configured, logs a note and returns gracefully.
+ * - If delivery fails, logs the error securely without exposing credentials.
+ * - Never throws an unhandled error so registration flow is never broken.
+ * 
+ * @param {Object} options
+ * @param {string} options.to - Recipient email address
+ * @param {string} options.fullName - Recipient display/registered name
+ * @returns {Promise<{ success: boolean, skipped?: boolean, error?: string, messageId?: string }>}
+ */
 async function sendWelcomeEmail({ to, fullName }) {
   if (!to || !to.includes('@')) {
     console.warn(`[EmailService] Invalid recipient email address provided: ${to}`);
@@ -212,7 +258,22 @@ async function sendWelcomeEmail({ to, fullName }) {
 
   const recipientName = String(fullName || 'Student').trim();
   const recipientEmail = String(to).trim().toLowerCase();
+  const { subject, text, html } = buildWelcomeEmailContent(recipientName);
 
+  // 1. Try Resend HTTPS API if configured (works seamlessly on Render Free Tier without port blocks)
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const resendRes = await sendViaResend({ to: recipientEmail, subject, html, text });
+      if (resendRes && resendRes.success) {
+        console.log(`[EmailService] Welcome email sent via Resend API to ${recipientEmail} (id: ${resendRes.messageId})`);
+        return resendRes;
+      }
+    } catch (resendError) {
+      console.error(`[EmailService] Resend API delivery error: ${resendError.message}`);
+    }
+  }
+
+  // 2. Fall back to SMTP transporter
   const transporter = createTransporter();
 
   if (!transporter) {
@@ -222,7 +283,6 @@ async function sendWelcomeEmail({ to, fullName }) {
 
   const { cleanUser } = sanitizeCredentials(process.env.SMTP_USER, process.env.SMTP_PASS);
   const fromAddress = resolveFromAddress(cleanUser);
-  const { subject, text, html } = buildWelcomeEmailContent(recipientName);
 
   try {
     const info = await transporter.sendMail({
@@ -237,7 +297,9 @@ async function sendWelcomeEmail({ to, fullName }) {
     return { success: true, messageId: info.messageId };
   } catch (error) {
     let errorDetail = error.message;
-    if (error.message && error.message.includes('535') && cleanUser.endsWith('@gmail.com')) {
+    if (error.message && error.message.includes('timeout')) {
+      errorDetail += ' (Notice: Render free tier blocks outbound SMTP ports 465/587. Use RESEND_API_KEY over HTTPS port 443 on Render free tier)';
+    } else if (error.message && error.message.includes('535') && cleanUser.endsWith('@gmail.com')) {
       errorDetail += ' (Hint: Gmail requires a 16-character Google App Password, not your standard Gmail password)';
     }
     console.error(`[EmailService] Failed to send welcome email to ${recipientEmail}: ${errorDetail}`);
