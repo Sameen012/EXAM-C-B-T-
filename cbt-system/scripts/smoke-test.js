@@ -22,6 +22,7 @@ const checks = [
   ['favicon.png asset', '/favicon.png', 200],
   ['SACHT logo asset', '/assets/SACHT.png', 200],
   ['MedPrep logo asset', '/assets/medprep-logo.png', 200],
+  ['MedPrep background image asset', '/assets/medprep-bg.jpg', 200],
 ];
 
 (async () => {

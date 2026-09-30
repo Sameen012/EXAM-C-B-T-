@@ -470,7 +470,68 @@ img {
 }
 
 /* Layout and Card Pages */
-.landing-page,
+.landing-page {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1;
+  min-height: calc(100vh - 140px);
+  padding: 48px max(24px, calc((100vw - 1280px) / 2 + 36px));
+  background-color: #081628;
+  background-image: 
+    linear-gradient(to right, 
+      rgba(8, 22, 40, 0.05) 0%, 
+      rgba(8, 22, 40, 0.2) 32%, 
+      rgba(8, 22, 40, 0.76) 54%, 
+      rgba(8, 22, 40, 0.95) 70%, 
+      #081628 100%),
+    url('../assets/medprep-bg.jpg');
+  background-repeat: no-repeat;
+  background-position: left center;
+  background-size: cover;
+  box-sizing: border-box;
+}
+
+.landing-card {
+  width: min(100%, 620px);
+  min-width: 0;
+  box-sizing: border-box;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.45), 0 8px 24px -6px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  padding: 40px 36px;
+  position: relative;
+  z-index: 2;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.landing-card:hover {
+  box-shadow: 0 24px 52px -10px rgba(0, 0, 0, 0.5), 0 12px 28px -6px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 900px) {
+  .landing-page {
+    justify-content: center;
+    padding: 36px 16px;
+    background-image: 
+      linear-gradient(180deg, 
+        rgba(8, 22, 40, 0.4) 0%, 
+        rgba(8, 22, 40, 0.85) 30%, 
+        rgba(8, 22, 40, 0.98) 100%),
+      url('../assets/medprep-bg.jpg');
+    background-position: center top;
+    background-size: cover;
+  }
+
+  .landing-card {
+    width: 100%;
+    max-width: 580px;
+    padding: 30px 20px;
+  }
+}
+
 .form-page {
   display: flex;
   align-items: center;
@@ -479,7 +540,6 @@ img {
   padding: 36px 20px;
 }
 
-.landing-card,
 .form-card,
 .panel {
   width: min(100%, 740px);
