@@ -474,41 +474,50 @@ img {
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   flex: 1;
   min-height: calc(100vh - 140px);
-  padding: 48px max(24px, calc((100vw - 1280px) / 2 + 36px));
+  padding: 56px 24px;
   background-color: #081628;
   background-image: 
-    linear-gradient(to right, 
-      rgba(8, 22, 40, 0.05) 0%, 
-      rgba(8, 22, 40, 0.2) 32%, 
-      rgba(8, 22, 40, 0.76) 54%, 
-      rgba(8, 22, 40, 0.95) 70%, 
-      #081628 100%),
+    linear-gradient(135deg, 
+      rgba(8, 22, 40, 0.42) 0%, 
+      rgba(8, 22, 40, 0.22) 40%, 
+      rgba(8, 22, 40, 0.48) 100%),
     url('../assets/medprep-bg.jpg');
   background-repeat: no-repeat;
-  background-position: left center;
+  background-position: center center;
   background-size: cover;
   box-sizing: border-box;
 }
 
 .landing-card {
-  width: min(100%, 620px);
+  width: min(100%, 650px);
   min-width: 0;
   box-sizing: border-box;
-  background: #ffffff;
-  border-radius: 20px;
-  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.45), 0 8px 24px -6px rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  padding: 40px 36px;
+  background: rgba(255, 255, 255, 0.84);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-radius: 22px;
+  box-shadow: 
+    0 24px 50px -10px rgba(0, 0, 0, 0.48),
+    0 10px 24px -6px rgba(0, 0, 0, 0.24),
+    0 0 0 1px rgba(255, 255, 255, 0.5),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  padding: 42px 38px;
   position: relative;
   z-index: 2;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .landing-card:hover {
-  box-shadow: 0 24px 52px -10px rgba(0, 0, 0, 0.5), 0 12px 28px -6px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 30px 60px -10px rgba(0, 0, 0, 0.55),
+    0 14px 28px -6px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.65),
+    inset 0 1px 2px 0 rgba(255, 255, 255, 1);
 }
 
 @media (max-width: 900px) {
@@ -529,6 +538,9 @@ img {
     width: 100%;
     max-width: 580px;
     padding: 30px 20px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 }
 
