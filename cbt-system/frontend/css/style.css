@@ -327,6 +327,8 @@ img {
 .footer-val {
   color: #f8fafc;
   font-weight: 500;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .footer-val a {
@@ -400,6 +402,16 @@ img {
   text-align: center;
   font-size: 0.85rem;
   color: #64748b;
+}
+
+@media (max-width: 640px) {
+  .site-footer {
+    padding: 28px 16px 20px;
+  }
+  .footer-container {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
 }
 
 /* Compatibility with previous footer layout */
