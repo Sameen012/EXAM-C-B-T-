@@ -64,10 +64,10 @@ function resolveFromAddress(user) {
   }
 
   if (user) {
-    return `"SACHT CBT Team" <${user}>`;
+    return `"MedPrep CBT Team" <${user}>`;
   }
 
-  return configuredFrom || '"SACHT CBT Team" <no-reply@sacht.edu.ng>';
+  return configuredFrom || '"MedPrep CBT Team" <no-reply@sacht.edu.ng>';
 }
 
 /**
@@ -120,13 +120,13 @@ function createTransporter() {
 function buildWelcomeEmailContent(fullName) {
   const safeName = escapeHtml(fullName);
 
-  const subject = 'Welcome to SACHT CBT 🎉';
+  const subject = 'Welcome to MedPrep CBT 🎉';
 
   const text = `Hello ${fullName},
 
-Welcome to SACHT CBT!
+Welcome to MedPrep CBT!
 
-Your account has been successfully created, and you can now log in and start practicing for your medical and national examinations.
+Your account has been successfully created, and you can now log in and start practicing for your medical and health-science examinations.
 
 You can use your account to:
 Practice CBT questions
@@ -135,10 +135,10 @@ Take timed examinations
 Review your results
 Track your practice history
 
-Thank you for using SACHT CBT.
+Thank you for using MedPrep CBT.
 
 Best regards,
-SACHT CBT Team`;
+MedPrep CBT Team`;
 
   const html = `<!DOCTYPE html>
 <html>
@@ -151,16 +151,16 @@ SACHT CBT Team`;
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
     <tr>
       <td style="background: linear-gradient(135deg, #1e3a8a 0%, #0284c7 100%); padding: 28px 24px; text-align: center; color: #ffffff;">
-        <h1 style="margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.5px;">Sultan Abdur-Rahman School of Health Technology</h1>
-        <p style="margin: 6px 0 0; font-size: 14px; opacity: 0.9;">SACHT National CBT Examination Portal</p>
+        <h1 style="margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.5px;">MedPrep CBT</h1>
+        <p style="margin: 6px 0 0; font-size: 14px; opacity: 0.9;">Online CBT Practice Platform for Medical &amp; Health-Science Students</p>
       </td>
     </tr>
     <tr>
       <td style="padding: 32px 28px;">
         <p style="font-size: 16px; line-height: 1.6; margin: 0 0 16px;">Hello <strong>${safeName}</strong>,</p>
-        <p style="font-size: 16px; line-height: 1.6; margin: 0 0 16px;">Welcome to <strong>SACHT CBT!</strong></p>
+        <p style="font-size: 16px; line-height: 1.6; margin: 0 0 16px;">Welcome to <strong>MedPrep CBT!</strong></p>
         <p style="font-size: 15px; line-height: 1.6; margin: 0 0 20px; color: #4a5568;">
-          Your account has been successfully created, and you can now log in and start practicing for your medical and national examinations.
+          Your account has been successfully created, and you can now log in and start practicing for your medical and health-science examinations.
         </p>
         <div style="background-color: #f8fafc; border-left: 4px solid #0284c7; padding: 16px 20px; border-radius: 4px; margin: 20px 0;">
           <p style="font-size: 15px; font-weight: 600; margin: 0 0 10px; color: #1e293b;">You can use your account to:</p>
@@ -172,16 +172,16 @@ SACHT CBT Team`;
             <li>Track your practice history</li>
           </ul>
         </div>
-        <p style="font-size: 15px; line-height: 1.6; margin: 24px 0 8px;">Thank you for using SACHT CBT.</p>
+        <p style="font-size: 15px; line-height: 1.6; margin: 24px 0 8px;">Thank you for using MedPrep CBT.</p>
         <p style="font-size: 15px; line-height: 1.6; margin: 0 0 8px;">
           Best regards,<br />
-          <strong>SACHT CBT Team</strong>
+          <strong>MedPrep CBT Team</strong>
         </p>
       </td>
     </tr>
     <tr>
       <td style="background-color: #f1f5f9; padding: 16px 24px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0;">
-        This is an automated notification from the SACHT CBT Examination Portal. Please do not reply directly to this email.
+        This is an automated notification from MedPrep CBT. Please do not reply directly to this email.
       </td>
     </tr>
   </table>
@@ -212,7 +212,7 @@ async function sendViaResend({ to, subject, html, text }) {
   const apiKey = stripQuotes(process.env.RESEND_API_KEY);
   if (!apiKey) return null;
 
-  const sender = stripQuotes(process.env.EMAIL_FROM) || 'SACHT CBT <onboarding@resend.dev>';
+  const sender = stripQuotes(process.env.EMAIL_FROM) || 'MedPrep CBT <onboarding@resend.dev>';
 
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -376,11 +376,11 @@ async function sendTestEmail(recipient) {
     try {
       const resendRes = await sendViaResend({
         to: targetEmail,
-        subject: 'SACHT CBT - Email Service Test',
-        text: 'This is a confirmation test email from the SACHT National CBT Examination Portal. Your email notification setup is active.',
+        subject: 'MedPrep CBT - Email Service Test',
+        text: 'This is a confirmation test email from the MedPrep CBT Examination Portal. Your email notification setup is active.',
         html: `<div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-          <h2 style="color: #0284c7;">SACHT CBT Email Service Test</h2>
-          <p>This is an automated confirmation test email from the <strong>SACHT National CBT Examination Portal</strong>.</p>
+          <h2 style="color: #0284c7;">MedPrep CBT Email Service Test</h2>
+          <p>This is an automated confirmation test email from the <strong>MedPrep CBT Examination Portal</strong>.</p>
           <p style="color: #16a34a; font-weight: bold;">&#10004; Your email notification configuration is active and working properly via Resend HTTPS API!</p>
           <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
           <p style="font-size: 12px; color: #666;">Provider: Resend API (HTTPS Port 443)</p>
@@ -405,11 +405,11 @@ async function sendTestEmail(recipient) {
     const info = await transporter.sendMail({
       from: fromAddress,
       to: targetEmail,
-      subject: 'SACHT CBT - SMTP Test Email',
-      text: 'This is a confirmation test email from the SACHT National CBT Examination Portal. Your email notification setup is functioning correctly.',
+      subject: 'MedPrep CBT - SMTP Test Email',
+      text: 'This is a confirmation test email from the MedPrep CBT Examination Portal. Your email notification setup is functioning correctly.',
       html: `<div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-        <h2 style="color: #0284c7;">SACHT CBT Email Service Test</h2>
-        <p>This is an automated confirmation test email from the <strong>SACHT National CBT Examination Portal</strong>.</p>
+        <h2 style="color: #0284c7;">MedPrep CBT Email Service Test</h2>
+        <p>This is an automated confirmation test email from the <strong>MedPrep CBT Examination Portal</strong>.</p>
         <p style="color: #16a34a; font-weight: bold;">&#10004; Your email notification configuration is active and working properly!</p>
         <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
         <p style="font-size: 12px; color: #666;">Sender: ${escapeHtml(fromAddress)}</p>

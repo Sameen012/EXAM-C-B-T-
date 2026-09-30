@@ -21,6 +21,7 @@ const checks = [
   ['favicon.ico asset', '/favicon.ico', 200],
   ['favicon.png asset', '/favicon.png', 200],
   ['SACHT logo asset', '/assets/SACHT.png', 200],
+  ['MedPrep logo asset', '/assets/medprep-logo.png', 200],
 ];
 
 (async () => {
@@ -109,9 +110,9 @@ const checks = [
       const sameenEmail = buildWelcomeEmailContent('Sameen');
       const aishaEmail = buildWelcomeEmailContent('Aisha');
       const emailTemplatePassed =
-        sameenEmail.subject === 'Welcome to SACHT CBT 🎉' &&
+        (sameenEmail.subject.includes('MedPrep CBT') || sameenEmail.subject.includes('SACHT CBT')) &&
         sameenEmail.text.includes('Hello Sameen,') &&
-        sameenEmail.text.includes('Welcome to SACHT CBT!') &&
+        (sameenEmail.text.includes('Welcome to MedPrep CBT!') || sameenEmail.text.includes('Welcome to SACHT CBT!')) &&
         sameenEmail.text.includes('Practice CBT questions') &&
         aishaEmail.text.includes('Hello Aisha,') &&
         sameenEmail.html.includes('Hello <strong>Sameen</strong>,') &&

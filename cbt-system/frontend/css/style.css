@@ -93,40 +93,45 @@ img {
   cursor: pointer;
 }
 
-.brand-link:hover .sacht-logo-rounded {
+.brand-link:hover .sacht-logo-rounded,
+.brand-link:hover .medprep-logo {
   transform: scale(1.05);
 }
 
-/* Rounded SACHT Institutional Emblem */
-.sacht-logo-rounded {
+/* Rounded MedPrep CBT Institutional Emblem */
+.sacht-logo-rounded,
+.medprep-logo {
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  object-fit: contain;
+  object-fit: cover;
   background: #ffffff;
   border: 2.5px solid #3b82f6;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
-  padding: 2px;
+  padding: 1px;
   flex-shrink: 0;
   display: inline-block;
   vertical-align: middle;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.sacht-logo-rounded:hover {
+.sacht-logo-rounded:hover,
+.medprep-logo:hover {
   transform: scale(1.05);
   box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
 }
 
-.sacht-logo-rounded.logo-sm {
+.sacht-logo-rounded.logo-sm,
+.medprep-logo.logo-sm {
   width: 38px;
   height: 38px;
   border-width: 2px;
 }
 
-.sacht-logo-rounded.logo-lg {
-  width: 76px;
-  height: 76px;
+.sacht-logo-rounded.logo-lg,
+.medprep-logo.logo-lg {
+  width: 86px;
+  height: 86px;
   border-width: 3.5px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
 }
