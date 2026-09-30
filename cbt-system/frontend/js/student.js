@@ -147,6 +147,50 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // Populate cached name immediately to avoid flash
+    const updateWelcomeNames = (name) => {
+      if (!name) return;
+      document.querySelectorAll('#student-welcome-name, #student-desktop-welcome-name, #mobile-user-name').forEach((el) => {
+        el.textContent = name;
+      });
+    };
+    const cachedStudentName = localStorage.getItem('studentName');
+    if (cachedStudentName) updateWelcomeNames(cachedStudentName);
+
+    // Setup Mobile Navigation Dropdown Toggle
+    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+    const mainNavLinks = document.getElementById('main-nav-links') || document.querySelector('.nav-links');
+    const menuIcon = document.getElementById('menu-icon');
+
+    if (mobileMenuToggle && mainNavLinks) {
+      mobileMenuToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = mainNavLinks.classList.toggle('open');
+        mobileMenuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        if (menuIcon) {
+          menuIcon.className = isOpen ? 'fas fa-times' : 'fas fa-bars';
+        }
+      });
+
+      document.addEventListener('click', (e) => {
+        if (mainNavLinks.classList.contains('open') && !mainNavLinks.contains(e.target) && !mobileMenuToggle.contains(e.target)) {
+          mainNavLinks.classList.remove('open');
+          mobileMenuToggle.setAttribute('aria-expanded', 'false');
+          if (menuIcon) menuIcon.className = 'fas fa-bars';
+        }
+      });
+
+      mainNavLinks.querySelectorAll('a, button').forEach((link) => {
+        link.addEventListener('click', () => {
+          if (window.innerWidth <= 768) {
+            mainNavLinks.classList.remove('open');
+            mobileMenuToggle.setAttribute('aria-expanded', 'false');
+            if (menuIcon) menuIcon.className = 'fas fa-bars';
+          }
+        });
+      });
+    }
+
     fetch('/api/auth/me', {
       headers: { Authorization: `Bearer ${studentToken}` },
     })
@@ -160,8 +204,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const result = await response.json();
         const user = result.data;
-        if (studentWelcomeName && user?.fullName) {
-          studentWelcomeName.textContent = user.fullName;
+        if (user?.fullName) {
+          updateWelcomeNames(user.fullName);
         }
 
         // If admin visits courses.html, show an Admin Console button in topbar
@@ -174,8 +218,13 @@ document.addEventListener('DOMContentLoaded', () => {
             adminBtn.className = 'nav-link';
             adminBtn.style.background = 'rgba(245, 158, 11, 0.25)';
             adminBtn.style.color = '#fef08a';
-            adminBtn.innerHTML = '<i class="fas fa-shield-alt"></i> Admin Console';
-            navLinks.insertBefore(adminBtn, navLinks.firstChild);
+            adminBtn.innerHTML = '<i class="fas fa-shield-alt"></i> <span>Admin Console</span>';
+            const homeLink = navLinks.querySelector('.nav-home-link');
+            if (homeLink && homeLink.nextSibling) {
+              navLinks.insertBefore(adminBtn, homeLink.nextSibling);
+            } else {
+              navLinks.insertBefore(adminBtn, navLinks.firstChild);
+            }
           }
         }
       })

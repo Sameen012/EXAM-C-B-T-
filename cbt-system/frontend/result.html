@@ -14,22 +14,34 @@
 
 <body>
   <div class="page-shell">
-    <header class="topbar"
-      style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-      <div class="brand-block">
-        <img src="./assets/SACHT.png" alt="SACHT Logo" class="sacht-logo-rounded" />
-        <div>
-          <h1 style="font-size: 1.35rem; line-height: 1.3;">SULTAN ABDULRAHAMAN COLLEGE OF HEALTH SCIENCES AND
-            TECHNOLOGY, GWADABAWA, SOKOTO</h1>
-          <p style="color: #94a3b8; font-size: 0.92rem; margin: 4px 0 0 0;">CBT Examination Results &amp; Performance
-            Review</p>
-        </div>
-      </div>
-      <div class="nav-links">
-        <a href="./courses.html" class="nav-link"><i class="fas fa-play-circle"></i> Practice Exam</a>
-        <a href="./history.html" class="nav-link"><i class="fas fa-history"></i> History</a>
-        <a href="./index.html" class="nav-link" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5;"><i
-            class="fas fa-sign-out-alt"></i> Logout</a>
+    <header class="topbar">
+      <div class="topbar-container">
+        <a href="./index.html" class="brand-link" title="Back to Home Portal">
+          <img src="./assets/SACHT.png" alt="SACHT Logo" class="sacht-logo-rounded" />
+          <div>
+            <h1 style="font-size: 1.25rem; line-height: 1.3;">SULTAN ABDULRAHAMAN COLLEGE OF HEALTH SCIENCES AND
+              TECHNOLOGY, GWADABAWA, SOKOTO</h1>
+            <p style="color: #94a3b8; font-size: 0.92rem; margin: 4px 0 0 0;">CBT Examination Results &amp; Performance
+              Review</p>
+          </div>
+        </a>
+
+        <!-- Mobile Menu Toggle Button -->
+        <button id="mobile-menu-toggle" class="mobile-menu-toggle" type="button" aria-label="Toggle navigation menu"
+          aria-expanded="false">
+          <span class="mobile-user-pill">
+            <i class="fas fa-bars" id="menu-icon"></i> <span>Menu</span>
+          </span>
+        </button>
+
+        <nav class="nav-links" id="main-nav-links">
+          <a href="./index.html" class="nav-link nav-home-link" title="Back to Home Portal">
+            <i class="fas fa-home"></i> <span>Back to Home</span>
+          </a>
+          <a href="./courses.html" class="nav-link"><i class="fas fa-play-circle"></i> <span>Practice Exam</span></a>
+          <a href="./history.html" class="nav-link"><i class="fas fa-history"></i> <span>History</span></a>
+          <a href="./index.html" class="nav-link nav-logout-btn"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a>
+        </nav>
       </div>
     </header>
 
