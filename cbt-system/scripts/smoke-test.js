@@ -122,7 +122,7 @@ const checks = [
       if (!emailTemplatePassed) failed = true;
 
       // Test Student Registration and Authentication Flow
-      const testStudentEmail = `smoke_student_${Date.now()}@example.com`;
+      const testStudentEmail = `smoke_temp_student_${Date.now()}@example.com`;
       const regResponse = await fetch(`http://localhost:${port}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -155,15 +155,19 @@ const checks = [
         const resultsPassed = studentResultsResponse.status === 200;
         console.log(`${resultsPassed ? 'PASS' : 'FAIL'} student /api/results access: ${studentResultsResponse.status}`);
         if (!resultsPassed) failed = true;
+
+        // Clean up temporary student account immediately so only 1 smoke test user is retained
+        await pool.query('DELETE FROM users WHERE email = ?', [testStudentEmail]);
       }
 
-      // Test Unified Account Registration (no role dropdown sent, defaults to question_creator)
-      const testCreatorEmail = `smoke_creator_${Date.now()}@example.com`;
+      // Test Unified Account Registration (The single dedicated Smoke Test User)
+      const testCreatorEmail = 'smoke_test_user@medprep.com';
+      await pool.query('DELETE FROM users WHERE email = ?', [testCreatorEmail]);
       const creatorRegResponse = await fetch(`http://localhost:${port}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          fullName: 'Smoke Test Creator',
+          fullName: 'Smoke Test User',
           email: testCreatorEmail,
           password: 'Password123!',
           confirmPassword: 'Password123!',
@@ -502,10 +506,18 @@ const checks = [
             }
           }
 
-          // Single-question dummy subjects cleanup verification
-          const { cleanupSingleQuestionCourses } = require('../database/initDatabase');
-          await cleanupSingleQuestionCourses();
-          console.log('PASS single-question dummy subjects cleanup routine executed');
+          // Clean up temporary User C test data so only ONE smoke test user remains in the system
+          try {
+            await pool.query('DELETE FROM exam_answers WHERE exam_attempt_id IN (SELECT id FROM exam_attempts WHERE user_id IN (SELECT id FROM users WHERE email = ?))', [testUserCEmail]);
+            await pool.query('DELETE FROM exam_attempts WHERE user_id IN (SELECT id FROM users WHERE email = ?)', [testUserCEmail]);
+            await pool.query('DELETE FROM users WHERE email = ?', [testUserCEmail]);
+            console.log('PASS temporary test user C cleaned up (retaining exactly one smoke test user)');
+          } catch (_) {}
+
+          // Automated test courses cleanup verification
+          const { cleanupTestCourses } = require('../database/initDatabase');
+          await cleanupTestCourses();
+          console.log('PASS test courses cleanup routine executed');
         }
 
         if (failed) process.exitCode = 1;
