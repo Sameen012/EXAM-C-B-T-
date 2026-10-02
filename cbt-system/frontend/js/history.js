@@ -13,7 +13,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!token) {
     historyList.innerHTML = `
-      <p>Please <a href="./student-login.html" style="color: #0b2545; font-weight: 600;">log in</a> with your student account to view your examination history.</p>
+      <div class="history-empty-state">
+        <i class="fas fa-user-lock"></i>
+        <h4 class="history-empty-title">Authentication Required</h4>
+        <p class="history-empty-desc">Please log in with your student account to view your examination history.</p>
+        <a href="./student-login.html" class="history-review-btn" style="text-decoration: none;">
+          <i class="fas fa-sign-in-alt"></i> Log In
+        </a>
+      </div>
     `;
     return;
   }
@@ -28,41 +35,57 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .then((results) => {
       if (results.length === 0) {
-        historyList.innerHTML = '<p>No completed practice attempts found. Choose a course and start practicing!</p>';
+        historyList.innerHTML = `
+          <div class="history-empty-state">
+            <i class="fas fa-clipboard-list"></i>
+            <h4 class="history-empty-title">No Practice Attempts Yet</h4>
+            <p class="history-empty-desc">You haven't completed any CBT practice exams. Choose a subject to get started!</p>
+            <a href="./courses.html" class="history-review-btn" style="text-decoration: none;">
+              <i class="fas fa-play-circle"></i> Browse Courses
+            </a>
+          </div>
+        `;
         return;
       }
 
       historyList.innerHTML = results.map((result) => {
         const dateObj = new Date(result.submitted_at || result.started_at || Date.now());
-        const formattedDate = dateObj.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-        const formattedTime = dateObj.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-        const isPassed = Number(result.percentage) >= 50;
+        const formattedDate = dateObj.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+        const formattedTime = dateObj.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        });
+
+        const percentageNum = Number(result.percentage ?? (result.total_questions > 0 ? (result.score / result.total_questions) * 100 : 0));
+        const isPassed = percentageNum >= 50;
 
         return `
           <article class="history-card">
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-              <div>
-                <h3 style="margin: 0 0 4px 0; color: #0b2545;">
-                  ${escapeHtml(result.course_name)}
-                  <span style="font-size: 0.85rem; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; margin-left: 6px;">(${escapeHtml(result.course_code)})</span>
-                </h3>
-              </div>
-              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                <span class="score-pill">
-                  Score: <strong>${result.score}</strong> / ${result.total_questions}
-                </span>
-                <span class="percentage-pill ${isPassed ? 'pass' : 'fail'}">
-                  <i class="fas ${isPassed ? 'fa-check-circle' : 'fa-times-circle'}" style="font-size: 0.78rem;"></i>
-                  ${Number(result.percentage).toFixed(2)}%
-                </span>
-                <span class="cell-date">
-                  <i class="far fa-calendar-alt"></i> ${formattedDate} &bull; ${formattedTime}
-                </span>
-              </div>
+            <div class="history-card-header">
+              <span class="history-course-name">${escapeHtml(result.course_name)}</span>
+              <span class="history-course-code">(${escapeHtml(result.course_code)})</span>
             </div>
-            <div>
-              <a href="./result.html" class="primary-btn view-result-link" data-result-id="${result.id}" style="text-decoration: none; padding: 10px 18px; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px;">
-                <i class="fas fa-poll"></i> Review Result
+            <div class="history-card-badges">
+              <span class="history-badge-score">
+                Score: ${result.score} / ${result.total_questions}
+              </span>
+              <span class="history-badge-percentage ${isPassed ? 'pass' : 'fail'}">
+                <i class="fas ${isPassed ? 'fa-check-circle' : 'fa-times-circle'}"></i>
+                ${percentageNum.toFixed(2)}%
+              </span>
+              <span class="history-card-date">
+                <i class="far fa-calendar"></i>
+                ${formattedDate} &middot; ${formattedTime}
+              </span>
+            </div>
+            <div class="history-card-actions">
+              <a href="./result.html" class="history-review-btn view-result-link" data-result-id="${result.id}">
+                <i class="fas fa-file-alt"></i> Review Result
               </a>
             </div>
           </article>
@@ -76,6 +99,12 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     })
     .catch((error) => {
-      historyList.innerHTML = `<p style="color: #dc2626;">${error.message}</p>`;
+      historyList.innerHTML = `
+        <div class="history-empty-state" style="border-color: #fecaca; background: #fff5f5;">
+          <i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i>
+          <h4 class="history-empty-title" style="color: #991b1b;">Error Loading History</h4>
+          <p class="history-empty-desc" style="color: #dc2626;">${escapeHtml(error.message)}</p>
+        </div>
+      `;
     });
 });

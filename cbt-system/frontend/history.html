@@ -23,25 +23,30 @@
             <p style="color: #94a3b8; font-size: 0.92rem; margin: 4px 0 0 0;">Candidate Examination History</p>
           </div>
         </a>
+
+        <nav class="nav-links">
+          <a href="./courses.html" class="nav-link">
+            <i class="fas fa-play-circle"></i> <span>Practice Exam</span>
+          </a>
+          <a href="./index.html" class="nav-link nav-home-link" title="Back to Home">
+            <i class="fas fa-home"></i> <span>Home</span>
+          </a>
+        </nav>
       </div>
     </header>
 
-    <main class="form-page" style="max-width: 850px; margin: 0 auto; padding: 24px 16px;">
-      <div style="margin-bottom: 16px; display: flex; gap: 10px; flex-wrap: wrap;">
-        <a href="./courses.html" class="secondary-btn"><i class="fas fa-arrow-left"></i> Back to Courses</a>
-        <a href="./index.html" class="secondary-btn"><i class="fas fa-home"></i> Back to Home</a>
-      </div>
-
-      <section class="form-card">
-        <h2>My Practice History</h2>
-        <p style="color: #64748b; margin-top: 4px; margin-bottom: 20px;">
-          Here are your completed CBT practice examinations. You can review your scores and detailed answers for any
-          attempt.
+    <main class="history-page-main">
+      <div class="history-main-card">
+        <h2 class="history-page-title">My Practice History</h2>
+        <p class="history-page-subtitle">
+          Here are your completed CBT practice examinations. You can review your scores and detailed results for any attempt.
         </p>
-        <div id="history-list">
-          <p>Loading history...</p>
+        <div id="history-list" class="history-grid">
+          <div class="history-loading">
+            <i class="fas fa-spinner fa-spin"></i> Loading practice history...
+          </div>
         </div>
-      </section>
+      </div>
     </main>
 
     <footer class="site-footer">

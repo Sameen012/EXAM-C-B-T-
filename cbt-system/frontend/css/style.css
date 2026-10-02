@@ -1412,3 +1412,242 @@ tbody td {
   }
 }
 
+/* ==========================================================================
+   Candidate Examination Practice History Styles (Matches UI Mockup)
+   ========================================================================== */
+
+.history-page-main {
+  width: 100%;
+  max-width: 1140px;
+  margin: 36px auto 48px auto;
+  padding: 0 20px;
+  flex: 1;
+}
+
+.history-main-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
+  padding: 36px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.history-page-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f2744;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.01em;
+}
+
+.history-page-subtitle {
+  font-size: 0.98rem;
+  color: #64748b;
+  margin: 0 0 28px 0;
+  line-height: 1.5;
+}
+
+.history-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+
+.history-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.history-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.06);
+}
+
+.history-card-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.history-course-name {
+  font-size: 1.18rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.history-course-code {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.history-card-badges {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.history-badge-score {
+  background-color: #e9eff6;
+  color: #1e293b;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.history-badge-percentage {
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.history-badge-percentage.pass {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.history-badge-percentage.pass i {
+  color: #16a34a;
+}
+
+.history-badge-percentage.fail {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.history-badge-percentage.fail i {
+  color: #ef4444;
+}
+
+.history-card-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 0.88rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.history-card-date i {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.history-card-actions {
+  display: flex;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.history-review-btn {
+  background-color: #0066ff;
+  color: #ffffff;
+  text-decoration: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 102, 255, 0.2);
+}
+
+.history-review-btn:hover {
+  background-color: #0052cc;
+  transform: translateY(-1px);
+}
+
+.history-review-btn:active {
+  transform: translateY(0);
+}
+
+.history-review-btn i {
+  font-size: 0.88rem;
+}
+
+.history-empty-state,
+.history-loading {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 48px 24px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px dashed #cbd5e1;
+}
+
+.history-empty-state i {
+  font-size: 2.5rem;
+  color: #94a3b8;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.history-empty-title {
+  margin: 0 0 6px 0;
+  color: #1e293b;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.history-empty-desc {
+  color: #64748b;
+  margin: 0 0 18px 0;
+  font-size: 0.95rem;
+}
+
+.history-loading {
+  color: #64748b;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+@media (max-width: 880px) {
+  .history-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .history-main-card {
+    padding: 24px 18px;
+  }
+
+  .history-page-main {
+    margin: 20px auto 36px auto;
+    padding: 0 14px;
+  }
+
+  .history-page-title {
+    font-size: 1.45rem;
+  }
+}
+
+
