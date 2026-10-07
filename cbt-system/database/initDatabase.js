@@ -54,6 +54,44 @@ async function cleanupOrphanedSmokeUsers() {
   }
 }
 
+async function migrateCoursesTable() {
+  try {
+    const [schemaRows] = await pool.query(
+      "SELECT sql FROM sqlite_master WHERE type='table' AND name='courses'"
+    );
+    const currentSql = schemaRows[0]?.sql || '';
+    if (currentSql.includes('course_code TEXT NOT NULL UNIQUE')) {
+      console.log('Migrating courses table to support per-user course code isolation...');
+      await pool.query('PRAGMA foreign_keys = OFF');
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS courses_new (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          course_name TEXT NOT NULL,
+          course_code TEXT NOT NULL,
+          course_description TEXT,
+          created_by INTEGER NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+          UNIQUE(course_code, created_by)
+        )
+      `);
+      await pool.query(
+        'INSERT INTO courses_new (id, course_name, course_code, course_description, created_by, created_at, updated_at) ' +
+        'SELECT id, course_name, course_code, course_description, created_by, created_at, updated_at FROM courses'
+      );
+      await pool.query('DROP TABLE courses');
+      await pool.query('ALTER TABLE courses_new RENAME TO courses');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_courses_name ON courses(course_name)');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_courses_code ON courses(course_code)');
+      await pool.query('PRAGMA foreign_keys = ON');
+      console.log('Courses table migration completed successfully.');
+    }
+  } catch (err) {
+    console.warn('Courses migration notice:', err.message);
+  }
+}
+
 async function initDatabase() {
   try {
     // 1. Check if tables already exist (e.g. uploaded SQLite file in Turso)
@@ -64,6 +102,7 @@ async function initDatabase() {
     if (existing && existing.length > 0) {
       console.log('Database tables verified in Turso (libSQL).');
       await cleanupOrphanedSmokeUsers();
+      await migrateCoursesTable();
       return true;
     }
 
@@ -88,6 +127,7 @@ async function initDatabase() {
     }
 
     await cleanupOrphanedSmokeUsers();
+    await migrateCoursesTable();
     console.log('Database and tables initialized successfully with Turso (libSQL).');
     return true;
   } catch (error) {

@@ -304,10 +304,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
 
-    // Load Available Courses
+    // Load Available Courses (isolated to current user's courses)
     const loadCourses = async () => {
       try {
-        const response = await fetch('/api/courses/available');
+        const response = await fetch('/api/courses/available', {
+          headers: studentToken ? { Authorization: `Bearer ${studentToken}` } : {},
+        });
 
         if (!response.ok) {
           throw new Error('Unable to load courses');
@@ -318,13 +320,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         courseSelect.innerHTML = '<option value="">-- Select a Course --</option>';
 
-        availableCoursesList.forEach((course) => {
-          const option = document.createElement('option');
-          option.value = course.id;
-          const qCount = course.question_count !== undefined ? ` (${course.question_count} questions)` : '';
-          option.textContent = `${course.course_name} (${course.course_code})${qCount}`;
-          courseSelect.appendChild(option);
-        });
+        if (availableCoursesList.length === 0) {
+          courseSelect.innerHTML = '<option value="">-- No courses created yet --</option>';
+        } else {
+          availableCoursesList.forEach((course) => {
+            const option = document.createElement('option');
+            option.value = course.id;
+            const qCount = course.question_count !== undefined ? ` (${course.question_count} questions)` : '';
+            option.textContent = `${course.course_name} (${course.course_code})${qCount}`;
+            courseSelect.appendChild(option);
+          });
+        }
 
         const preselectedCourseId = localStorage.getItem('selectedCourseId');
         if (preselectedCourseId && availableCoursesList.some((c) => String(c.id) === String(preselectedCourseId))) {

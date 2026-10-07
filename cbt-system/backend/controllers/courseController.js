@@ -32,14 +32,31 @@ exports.getCourses = async (req, res) => {
 
 exports.getAvailableCourses = async (req, res) => {
   try {
-    const [rows] = await pool.query(
-      `SELECT c.id, c.course_name, c.course_code, c.course_description,
+    const isSuperAdmin = req.user?.role === 'super_admin';
+    let query = `
+      SELECT c.id, c.course_name, c.course_code, c.course_description,
               COUNT(q.id) AS question_count
        FROM courses c
        LEFT JOIN questions q ON q.course_id = c.id
+    `;
+    const values = [];
+
+    // Cybersecurity Access Control: users only see their own courses when selecting practice exams
+    if (!isSuperAdmin) {
+      if (req.user?.id) {
+        query += ' WHERE c.created_by = ?';
+        values.push(req.user.id);
+      } else {
+        query += ' WHERE c.created_by IS NULL';
+      }
+    }
+
+    query += `
        GROUP BY c.id, c.course_name, c.course_code, c.course_description
-       ORDER BY c.course_name ASC`
-    );
+       ORDER BY c.course_name ASC
+    `;
+
+    const [rows] = await pool.query(query, values);
 
     return sendSuccess(res, 'Available courses retrieved successfully', rows);
   } catch (error) {
@@ -95,13 +112,19 @@ exports.createCourse = async (req, res) => {
   const trimmedDescription = String(courseDescription || '').trim();
 
   try {
-    const [existing] = await pool.query(
-      'SELECT id FROM courses WHERE course_code = ? OR course_name = ?',
-      [trimmedCode, trimmedName]
-    );
+    const isSuperAdmin = req.user?.role === 'super_admin';
+    let existingQuery = 'SELECT id FROM courses WHERE (course_code = ? OR course_name = ?)';
+    let existingParams = [trimmedCode, trimmedName];
+
+    if (!isSuperAdmin && req.user?.id) {
+      existingQuery += ' AND created_by = ?';
+      existingParams.push(req.user.id);
+    }
+
+    const [existing] = await pool.query(existingQuery, existingParams);
 
     if (existing.length > 0) {
-      return sendError(res, 'A course with this name or code already exists', 409);
+      return sendError(res, 'A course with this name or code already exists in your account', 409);
     }
 
     const [result] = await pool.query(
@@ -142,13 +165,18 @@ exports.updateCourse = async (req, res) => {
       return sendError(res, 'You are not authorized to edit this course', 403);
     }
 
-    const [duplicate] = await pool.query(
-      'SELECT id FROM courses WHERE (course_code = ? OR course_name = ?) AND id != ?',
-      [String(courseCode).trim(), String(courseName).trim(), id]
-    );
+    let dupQuery = 'SELECT id FROM courses WHERE (course_code = ? OR course_name = ?) AND id != ?';
+    let dupParams = [String(courseCode).trim(), String(courseName).trim(), id];
+
+    if (!isSuperAdmin && req.user?.id) {
+      dupQuery += ' AND created_by = ?';
+      dupParams.push(req.user.id);
+    }
+
+    const [duplicate] = await pool.query(dupQuery, dupParams);
 
     if (duplicate.length > 0) {
-      return sendError(res, 'Another course already uses this name or code', 409);
+      return sendError(res, 'Another course already uses this name or code in your account', 409);
     }
 
     await pool.query(

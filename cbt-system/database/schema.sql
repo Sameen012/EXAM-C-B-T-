@@ -18,12 +18,13 @@ CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 CREATE TABLE IF NOT EXISTS courses (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   course_name TEXT NOT NULL,
-  course_code TEXT NOT NULL UNIQUE,
+  course_code TEXT NOT NULL,
   course_description TEXT,
   created_by INTEGER NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  UNIQUE(course_code, created_by)
 );
 
 CREATE INDEX IF NOT EXISTS idx_courses_name ON courses(course_name);

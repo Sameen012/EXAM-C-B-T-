@@ -25,6 +25,23 @@ exports.requireAuth = (req, res, next) => {
   }
 };
 
+exports.optionalAuth = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret');
+      decoded.role = normalizeRole(decoded.role);
+      req.user = decoded;
+    } catch (_) {
+      // Ignore token decoding error for optional auth
+    }
+  }
+
+  return next();
+};
+
 exports.requireRole = (...allowedRoles) => (req, res, next) => {
   if (!req.user) {
     return sendError(res, 'Authentication token is required', 401);

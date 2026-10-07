@@ -409,18 +409,18 @@ exports.importQuestions = async (req, res) => {
 
         if (!resolvedCourseId) {
           const [courses] = await connection.query(
-            'SELECT id, course_name, course_code, created_by FROM courses WHERE id = ? OR course_code = ? OR course_name = ?',
-            [targetIdentifier, targetIdentifier, targetIdentifier]
+            isSuperAdmin
+              ? 'SELECT id, course_name, course_code, created_by FROM courses WHERE id = ? OR course_code = ? OR course_name = ?'
+              : 'SELECT id, course_name, course_code, created_by FROM courses WHERE (id = ? OR course_code = ? OR course_name = ?) AND created_by = ?',
+            isSuperAdmin
+              ? [targetIdentifier, targetIdentifier, targetIdentifier]
+              : [targetIdentifier, targetIdentifier, targetIdentifier, req.user.id]
           );
 
           if (courses.length > 0) {
-            if (!isSuperAdmin && courses[0].created_by && courses[0].created_by !== req.user.id) {
-              invalid.push({ row: index + 1, message: `Course "${courses[0].course_name}" was created by another user` });
-              continue;
-            }
             resolvedCourseId = courses[0].id;
           } else {
-            // AUTO-CREATE COURSE SO IT APPEARS IN COURSE MANAGEMENT & QUESTION MANAGEMENT
+            // AUTO-CREATE COURSE FOR THIS USER SO IT APPEARS IN THEIR COURSE & QUESTION MANAGEMENT
             let autoCode = String(question.courseCode || targetIdentifier).trim().replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 20).toUpperCase();
             let autoName = String(question.courseName || targetIdentifier).trim();
 
@@ -430,7 +430,10 @@ exports.importQuestions = async (req, res) => {
             }
             if (!autoCode) autoCode = `CRS${Date.now().toString().slice(-4)}`;
 
-            const [codeCheck] = await connection.query('SELECT id FROM courses WHERE course_code = ?', [autoCode]);
+            const [codeCheck] = await connection.query(
+              'SELECT id FROM courses WHERE course_code = ? AND created_by = ?',
+              [autoCode, req.user?.id || null]
+            );
             if (codeCheck.length > 0) {
               autoCode = `${autoCode}_${Date.now().toString().slice(-4)}`;
             }
